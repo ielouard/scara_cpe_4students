@@ -13,15 +13,13 @@ from trajectory_msgs.msg import JointTrajectoryPoint
 from control_msgs.msg import JointTrajectoryAction, JointTrajectoryGoal, FollowJointTrajectoryAction, FollowJointTrajectoryGoal
 
 
-
-
-
 class Joint:
         def __init__(self):
             self.shoulder_1_joint=0
             self.shoulder_2_joint=0
-            self.Link1_LENGTH = 0.08
-            self.Link2_LENGTH = 0.047
+            self.Base_Link_LENGHT = 0.048
+            self.Link1_LENGTH = 0.128 - self.Base_Link_LENGHT
+            self.Link2_LENGTH = 0.175 - 0.128
             self.jta = actionlib.SimpleActionClient('/scara_cpe/scara_cpe_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
             rospy.loginfo('Waiting for joint trajectory action')
             self.jta.wait_for_server()
@@ -44,12 +42,13 @@ class Joint:
             return math.sqrt(x*x + y*y)
 
         def angles(self,x, y):
+            y = y - self.Base_Link_LENGHT
             dist = self.distance(x,y)
             D1 = math.atan2(y, x)
             D2 = self.lawOfCosines(dist, self.Link1_LENGTH, self.Link2_LENGTH)
             A1 = D1 + D2
             A2 = self.lawOfCosines(self.Link1_LENGTH, self.Link2_LENGTH, dist)
-            return [A1, A2]
+            return [(math.pi/2) - A1, math.pi - A2]
 
         def handle_gotoxy(self, req):
             print "Go to :\n " , req
@@ -58,9 +57,9 @@ class Joint:
 
 def main():
     arm = Joint()
-    angles = arm.angles(-0.073,0.08)
-    print angles
-    arm.move_joint(angles)
+    # angles = arm.angles(0.035,0.14)
+    # print angles
+    # arm.move_joint(angles)
     rospy.spin()
 
 
