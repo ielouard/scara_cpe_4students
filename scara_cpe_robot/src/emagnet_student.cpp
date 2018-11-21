@@ -10,7 +10,7 @@
 
 void grip_callback(const std_msgs::Bool::ConstPtr& msg);
 std::string receive_data(void);
-std::string port="/dev/ttyUSB1";
+std::string port="/dev/ttyUSB0";
 
 serial::Serial *s;
 
@@ -58,12 +58,14 @@ int main(int argc, char **argv)
 
       s->read(&detect, 1);
       if(detect==1){
-        //ROS_INFO("TRUE");
+        ROS_INFO("Grab coin");
         isDetected.data=true;
+
       }else{
         //ROS_INFO("False");
         isDetected.data=false;
       }
+
       detect_metal_pub.publish(isDetected);
 
 	  //

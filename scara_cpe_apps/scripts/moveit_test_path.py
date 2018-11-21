@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 
 import sys
 import copy
@@ -9,58 +9,49 @@ import geometry_msgs.msg
 
 
 class moveit_test_path:
-  waypoints= []
+
   def __init__(self):
-    print "============ Starting tutorial setup"
+    rospy.loginfo('starting init')
+    rospy.init_node('moveit_catesien', anonymous = True)
     moveit_commander.roscpp_initialize(sys.argv)
-    rospy.init_node('move_group_python_interface_tutorial', anonymous=True)
-    self.robot = moveit_commander.RobotCommander()
-    self.scene = moveit_commander.PlanningSceneInterface()
     self.group = moveit_commander.MoveGroupCommander("scara_cpe_group")
-    self.display_trajectory_publisher = rospy.Publisher('/move_group/display_planned_path', moveit_msgs.msg.DisplayTrajectory,queue_size=30)
-    self.group.set_named_target('left')
-    self.group.go(wait=True)
-    self.group.set_pose_reference_frame("base_link")
-    self.pose_B = geometry_msgs.msg.Pose()
-    self.pose_D= geometry_msgs.msg.Pose()
-    self.pose_B .position.x = -0.035
-    self.pose_B.position.y = 0.12
-    self.pose_B.position.z = -0.025
 
-    self.pose_D .position.x = 0.035
-    self.pose_D.position.y = 0.14
-    self.pose_D.position.z = -0.025
 
-    rospy.sleep(3)
+  def set_cartesien(self):
+     pose_target_B = geometry_msgs.msg.Pose()
+     pose_target_B.position.x = 0.035
+     pose_target_B.position.y = 0.14
+     pose_target_B.position.z = -0.025
 
-  def move_to_position(self):
-	#self.group.set_joint_value_target(self.pose_B,True)
+     pose_target_D = geometry_msgs.msg.Pose()
+     pose_target_D.position.x = -0.035
+     pose_target_D.position.y = 0.08
+     pose_target_D.position.z = -0.025
 
-	self.current_pose=self.group.get_current_pose().pose
-	self.current_pose.position.z=-0.025
+     pose_target_A = geometry_msgs.msg.Pose()
+     pose_target_A.position.x = -0.035
+     pose_target_A.position.y = -0.09
+     pose_target_A.position.z = -0.025
 
-	self.waypoints.append(self.group.get_current_pose().pose)
-	self.waypoints.append(self.pose_B)
-	self.waypoints.append(self.pose_D)
-	print self.waypoints
+     self.group.set_named_target('left')
+     self.group.go(wait=True)
+     rospy.sleep(1)
 
-	#self.group.plan()
-	#self.group.go(True)
+     waypoints = []
 
-	#rospy.sleep(3)
-	#print 'do second move'
-	(self.plan,self.fraction)=self.group.compute_cartesian_path(self.waypoints,0.01,1000)
-	rospy.sleep(3)
-	self.group.execute(self.plan)
-	#print self.waypoints
+     point_initial = self.group.get_current_pose().pose
+     point_initial.position.z = -0.025
+     waypoints.append(copy.deepcopy(point_initial))
 
-	rospy.sleep(3)
+     waypoints.append(copy.deepcopy(pose_target_D))
+#     waypoints.append(copy.deepcopy(pose_target_D))
+#     waypoints.append(copy.deepcopy(pose_target_A))
 
+     plan = self.group.plan()
+     (plan, fraction) = self.group.compute_cartesian_path(waypoints, 0.01, 0.0)
+     self.group.execute(plan)
+     rospy.sleep(5)
 
 if __name__ == '__main__':
-    try:
-	moveit=moveit_test_path()
-	moveit.move_to_position()
-	rospy.spin()
-    except rospy.ROSInterruptException:
-        pass
+  scara = moveit_test_path()
+  scara.set_cartesien()
